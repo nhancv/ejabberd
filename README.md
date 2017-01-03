@@ -82,7 +82,9 @@ mod_hello_word: {}
 and
 `setupDir/logs/error.log`
     
-
+Links
+-----
+- Wiki: https://github.com/nhancv/nc-ejabberd-extra/wiki
 
 
 
