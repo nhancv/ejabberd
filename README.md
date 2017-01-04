@@ -35,7 +35,7 @@ setupDir: /home/nhancao/Softs/ejabberd-16.12
 
 - Ejabberd source code for build custom module place at:
 ```bash
-sourceDir: /home/nhancao/Projects/ejabberd
+sourceDir: /home/nhancao/Projects/nc-ejabberd-extra
 ```
 
 *Note: replace `setupDir` and `sourceDir` correlative 
