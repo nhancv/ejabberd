@@ -17,7 +17,7 @@ $ sudo apt-get install libyaml-dev
 
 Compile source:
 ```bash
-cd ejabberd
+cd <source dir>
 ./autogen.sh
 ./configure
 make
