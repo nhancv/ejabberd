@@ -68,7 +68,7 @@ sourceDir: /home/nhancao/Projects/nc-ejabberd-extra
   `sourceDir/ebin/mod_hello_word.beam`
 - copy the `mod_hello_word.beam` file generated above to `setupDir` using the following command:
 ```bash
-sudo cp sourceDir/ebin/mod_hello_word.beam setupDir/lib/ejabberd-16.12/ebin/
+cp sourceDir/ebin/mod_hello_word.beam setupDir/lib/ejabberd-16.12/ebin/
 ```
 
 - Add new module to config file place at: `setupDir/conf/ejabberd.yml`
