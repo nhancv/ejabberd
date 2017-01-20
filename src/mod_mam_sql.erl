@@ -84,23 +84,48 @@ store(Pkt, LServer, {LUser, LHost}, Type, Peer, Nick, _Dir) ->
     XML = fxml:element_to_binary(Pkt),
     Body = fxml:get_subtag_cdata(Pkt, <<"body">>),
     SType = jlib:atom_to_binary(Type),
-    case ejabberd_sql:sql_query(
-           LServer,
-           ?SQL("insert into archive (username, timestamp,"
-                " peer, bare_peer, xml, txt, kind, nick) values ("
-		"%(SUser)s, "
-		"%(TSinteger)d, "
-		"%(LPeer)s, "
-		"%(BarePeer)s, "
-		"%(XML)s, "
-		"%(Body)s, "
-		"%(SType)s, "
-		"%(Nick)s)")) of
-	{updated, _} ->
-	    {ok, ID};
-	Err ->
-	    Err
-    end.
+
+    %%Check is notify message by: the same username and not has resource
+    IsNotify = (string:str(parse_string(BarePeer), parse_string(SUser)) == 1),
+    SqlNotify = lists:concat(["CALL archive_update_read_message('", parse_string(Body),"', '", parse_string(SUser), "', '", parse_string(BarePeer), "')"]),
+	
+	%%If notify then call procedure else insert to archive normally
+	case IsNotify of
+		true ->
+			case (string:str(parse_string(LPeer), "/") == 0) of
+				true ->
+				?INFO_MSG("Notify call procedure ~p~n",[SqlNotify]),
+				ejabberd_sql:sql_query(
+		           LServer,
+		           SqlNotify);
+				false ->
+					{}
+			end;
+
+		false ->
+			case ejabberd_sql:sql_query(
+		           LServer,
+		           ?SQL("insert into archive (username, timestamp,"
+		                " peer, bare_peer, xml, txt, kind, nick) values ("
+				"%(SUser)s, "
+				"%(TSinteger)d, "
+				"%(LPeer)s, "
+				"%(BarePeer)s, "
+				"%(XML)s, "
+				"%(Body)s, "
+				"%(SType)s, "
+				"%(Nick)s)")) of
+				{updated, _} ->
+				    {ok, ID};
+				Err ->
+				    Err
+		   end
+	end.
+
+parse_string(Input) ->
+    R = lists:flatten(io_lib:format("~p",[Input])),
+    string:substr(R,4,string:len(R)-6).
+
 
 write_prefs(LUser, _LServer, #archive_prefs{default = Default,
 					   never = Never,
