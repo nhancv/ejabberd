@@ -85,19 +85,19 @@ store(Pkt, LServer, {LUser, LHost}, Type, Peer, Nick, _Dir) ->
     Body = fxml:get_subtag_cdata(Pkt, <<"body">>),
     SType = jlib:atom_to_binary(Type),
 
-    %%Check is notify message by: the same username and not has resource
-    IsNotify = (string:str(parse_string(BarePeer), parse_string(SUser)) == 1),
-    SqlNotify = lists:concat(["CALL archive_update_read_message('", parse_string(Body),"', '", parse_string(SUser), "', '", parse_string(BarePeer), "')"]),
+    %%Check is notify message by: exist "type":"notify" in body
+    IsNotify = (string:str(parse_string(Body), "\\\"type\\\":\\\"notify\\\"") > 0),
+    SqlNotify = lists:concat(["CALL archive_notify_proc('", parse_string(Body),"', '", parse_string(SUser), "', '", parse_string(BarePeer), "')"]),
 	
 	%%If notify then call procedure else insert to archive normally
 	case IsNotify of
 		true ->
-			case (string:str(parse_string(LPeer), "/") == 0) of
+			case (string:str(parse_string(XML), "urn:xmpp:delay") == 0) of
 				true ->
-				?INFO_MSG("Notify call procedure ~p~n",[SqlNotify]),
-				ejabberd_sql:sql_query(
-		           LServer,
-		           SqlNotify);
+					?INFO_MSG("Notify call procedure ~p~n",[SqlNotify]),
+					ejabberd_sql:sql_query(
+						LServer,
+						SqlNotify);
 				false ->
 					{}
 			end;
