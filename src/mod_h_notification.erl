@@ -26,8 +26,16 @@ create_push_message(_From, _To, Packet) ->
     Receiver = parse_string(jid:to_string(jid:tolower(_To))),
     Body = parse_string(fxml:get_subtag_cdata(El, <<"body">>)),
     XML = parse_string(fxml:element_to_binary(El)),
-   
-    post_push_message(Sender, Receiver, Body, XML).
+
+    %%Check is notify message by: exist "type":"notify" in body
+    NotNotify = ((string:equal(Body, "") == false) and (string:str(Body, "\\\"type\\\":\\\"notify\\\"") == 0)),
+    case NotNotify of
+        true ->
+            post_push_message(Sender, Receiver, Body, XML);
+
+        false ->
+            {}
+    end.
 
 post_push_message(Sender, Receiver, Body, XML) ->
     ?INFO_MSG("Posting From ~p To ~p Body ~p XML ~p~n",[Sender, Receiver, Body, XML]),
@@ -39,4 +47,10 @@ post_push_message(Sender, Receiver, Body, XML) ->
 
 parse_string(Input) ->
     R = lists:flatten(io_lib:format("~p",[Input])),
-    string:substr(R,4,string:len(R)-6).
+    case string:equal(R, "<<>>") of
+        true ->
+            "";
+        false ->
+            string:substr(R,4,string:len(R)-6)
+    end.
+

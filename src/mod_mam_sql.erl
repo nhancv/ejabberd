@@ -126,7 +126,12 @@ store(Pkt, LServer, {LUser, LHost}, Type, Peer, Nick, _Dir) ->
 
 parse_string(Input) ->
     R = lists:flatten(io_lib:format("~p",[Input])),
-    string:substr(R,4,string:len(R)-6).
+  case string:equal(R, "<<>>") of
+    true ->
+      "";
+    false ->
+      string:substr(R,4,string:len(R)-6)
+  end.
 
 
 write_prefs(LUser, _LServer, #archive_prefs{default = Default,
