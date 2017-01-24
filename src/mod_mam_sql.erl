@@ -92,7 +92,9 @@ store(Pkt, LServer, {LUser, LHost}, Type, Peer, Nick, _Dir) ->
 	%%If notify then call procedure else insert to archive normally
 	case IsNotify of
 		true ->
-			case (string:str(parse_string(XML), "urn:xmpp:delay") == 0) of
+      FromStr = lists:concat(["from='", parse_string(SUser), "@"]),
+
+			case (string:str(parse_string(XML), FromStr) > 0) and (string:str(parse_string(XML), "urn:xmpp:delay") == 0) of
 				true ->
 					?INFO_MSG("Notify call procedure ~p~n",[SqlNotify]),
 					ejabberd_sql:sql_query(
