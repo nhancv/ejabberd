@@ -50,25 +50,51 @@ store_messages(Host, {User, _Server}, Msgs, Len, MaxOfflineMsgs) ->
 	       true -> 0
 	    end,
     if Count > MaxOfflineMsgs -> {atomic, discard};
-       true ->
-	    Query = lists:map(
-		      fun(M) ->
-			      LUser = (M#offline_msg.to)#jid.luser,
-			      From = M#offline_msg.from,
-			      To = M#offline_msg.to,
-			      Packet = xmpp:set_from_to(
-					 M#offline_msg.packet, From, To),
-			      NewPacket = xmpp_util:add_delay_info(
-					    Packet, jid:make(Host),
-					    M#offline_msg.timestamp,
-					    <<"Offline Storage">>),
-			      XML = fxml:element_to_binary(
-				      xmpp:encode(NewPacket)),
-                              sql_queries:add_spool_sql(LUser, XML)
-		      end,
-		      Msgs),
-	    sql_queries:add_spool(Host, Query)
+        true ->
+          Query = lists:filter(
+            fun(Q) ->
+              Q =/= nil
+            end,
+              lists:map(
+              fun(M) ->
+                LUser = (M#offline_msg.to)#jid.luser,
+                From = M#offline_msg.from,
+                To = M#offline_msg.to,
+                Packet = xmpp:set_from_to(
+                  M#offline_msg.packet, From, To),
+                NewPacket = xmpp_util:add_delay_info(
+                  Packet, jid:make(Host),
+                  M#offline_msg.timestamp,
+                  <<"Offline Storage">>),
+                XML = fxml:element_to_binary(
+                  xmpp:encode(NewPacket)),
+
+                %%Check is notify message by: exist "type":"notify" in body
+                El = xmpp:encode(Packet),
+                Body = fxml:get_subtag_cdata(El, <<"body">>),
+                IsNotify = (string:str(parse_string(Body), "\\\"type\\\":\\\"notify\\\"") > 0),
+
+                case IsNotify of
+                  true ->
+                    nil;
+                  false ->
+                    sql_queries:add_spool_sql(LUser, XML)
+                end
+              end,
+              Msgs)
+          ),
+
+          sql_queries:add_spool(Host, Query)
     end.
+
+parse_string(Input) ->
+  R = lists:flatten(io_lib:format("~p",[Input])),
+  case string:equal(R, "<<>>") of
+    true ->
+      "";
+    false ->
+      string:substr(R,4,string:len(R)-6)
+  end.
 
 pop_messages(LUser, LServer) ->
     case sql_queries:get_and_del_spool_msg_t(LServer, LUser) of
