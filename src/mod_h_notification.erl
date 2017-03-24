@@ -40,8 +40,8 @@ create_push_message(_From, _To, Packet) ->
 post_push_message(Sender, Receiver, Body, XML) ->
     ?INFO_MSG("Posting From ~p To ~p Body ~p XML ~p~n",[Sender, Receiver, Body, XML]),
 
-    httpc:request(post, {"http://local.beesightsoft.com:7012/notification", [], "application/x-www-form-urlencoded",
-        lists:concat(["From=", Sender,"&To=", Receiver,"&Body=", Body, "&XML=", XML])}, [], []),
+    httpc:request(post, {"http://nhancv.github.io/notification", [], "application/x-www-form-urlencoded",
+        lists:concat(["from=", Sender,"&to=", Receiver,"&body=", Body, "&xml=", XML])}, [], []),
     
     ?INFO_MSG("Push Sent.", []).
 
